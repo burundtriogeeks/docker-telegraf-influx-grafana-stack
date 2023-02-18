@@ -12,7 +12,7 @@ services:
       - influxdb
     hostname: b-telegraf
     ports:
-    - '127.0.0.1:8125:8125/udp'
+      - '127.0.0.1:8125:8125/udp'
 
   influxdb:
     image: influxdb:1.8-alpine
@@ -40,6 +40,19 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning/:/etc/grafana/provisioning/
       - ./grafana/dashboards/:/var/lib/grafana/dashboards/
+
+  php:
+    image: php:7.4-fpm
+    volumes:
+      - ./php:/var/www/html
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./php:/var/www/html
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - '127.0.0.1:8080:80'
 
 volumes:
   grafana_data: {}
