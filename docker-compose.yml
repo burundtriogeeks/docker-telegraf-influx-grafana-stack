@@ -2,18 +2,23 @@ version: '3.6'
 services:
   telegraf:
     image: telegraf:1.18-alpine
+    platform: linux/x86_64
     volumes:
-    - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - influxdb
     links:
       - influxdb
+    hostname: b-telegraf
     ports:
     - '127.0.0.1:8125:8125/udp'
 
   influxdb:
     image: influxdb:1.8-alpine
+    platform: linux/x86_64
     env_file: configuration.env
+    hostname: b-influxdb
     ports:
       - '127.0.0.1:8086:8086'
     volumes:
@@ -22,11 +27,13 @@ services:
 
   grafana:
     image: grafana/grafana:8.0.2
+    platform: linux/x86_64
     depends_on:
       - influxdb
     env_file: configuration.env
     links:
       - influxdb
+    hostname: b-grafana
     ports:
       - '127.0.0.1:3000:3000'
     volumes:
