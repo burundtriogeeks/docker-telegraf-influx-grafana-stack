@@ -5,14 +5,29 @@ services:
     platform: linux/x86_64
     volumes:
       - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - influxdb
     links:
       - influxdb
+      - php
+      - nginx
     hostname: b-telegraf
     ports:
       - '127.0.0.1:8125:8125/udp'
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: socket-proxy
+    restart: always
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '127.0.0.1:2375:2375'
+    environment:
+      - LOG_LEVEL=debug
+      - CONTAINERS=1
+      - INFO=1
 
   influxdb:
     image: influxdb:1.8-alpine
@@ -44,13 +59,16 @@ services:
   php:
     image: php:7.4-fpm
     volumes:
-      - ./php:/var/www/html
+      - ./src:/var/www/html
+      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf
 
   nginx:
     image: nginx:latest
     volumes:
-      - ./php:/var/www/html
+      - ./src:/var/www/html
       - ./nginx:/etc/nginx/conf.d
+    links:
+      - php
     ports:
       - '127.0.0.1:8080:80'
 
