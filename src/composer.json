@@ -1,0 +1,14 @@
+{
+  "require": {
+    "mongodb/mongodb": "1.15.0",
+    "elasticsearch/elasticsearch" : "v8.6.2"
+  },
+  "config": {
+    "platform": {
+      "php": "7.4.33"
+    },
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}

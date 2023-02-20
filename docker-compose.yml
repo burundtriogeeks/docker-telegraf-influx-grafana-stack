@@ -3,6 +3,7 @@ services:
   telegraf:
     image: telegraf:1.18-alpine
     platform: linux/x86_64
+    restart: always
     volumes:
       - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     depends_on:
@@ -11,6 +12,8 @@ services:
       - influxdb
       - php
       - nginx
+      - socket-proxy
+      - elasticsearch
     hostname: b-telegraf
     ports:
       - '127.0.0.1:8125:8125/udp'
@@ -32,6 +35,7 @@ services:
   influxdb:
     image: influxdb:1.8-alpine
     platform: linux/x86_64
+    restart: always
     env_file: configuration.env
     hostname: b-influxdb
     ports:
@@ -43,6 +47,7 @@ services:
   grafana:
     image: grafana/grafana:8.0.2
     platform: linux/x86_64
+    restart: always
     depends_on:
       - influxdb
     env_file: configuration.env
@@ -57,13 +62,15 @@ services:
       - ./grafana/dashboards/:/var/lib/grafana/dashboards/
 
   php:
-    image: php:7.4-fpm
+    build: ./php/
+    restart: always
     volumes:
       - ./src:/var/www/html
       - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf
 
   nginx:
     image: nginx:latest
+    restart: always
     volumes:
       - ./src:/var/www/html
       - ./nginx:/etc/nginx/conf.d
@@ -72,6 +79,38 @@ services:
     ports:
       - '127.0.0.1:8080:80'
 
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - '127.0.0.1:27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+
+  elasticsearch:
+    image: elasticsearch:8.6.0
+    restart: always
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    ports:
+      - '127.0.0.1:9200:9200'
+      - '127.0.0.1:9300:9300'
+
+
 volumes:
   grafana_data: {}
   influxdb_data: {}
+  elastic_data: {}
